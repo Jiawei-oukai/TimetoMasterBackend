@@ -5,7 +5,6 @@ export const save = async (newAchievement) => {
     const achievement = new Achievement(newAchievement);
     return achievement.save()
         .then((savedAchievement) => {
-            console.log("Achievement saved:", savedAchievement);
             return savedAchievement;
         })
         .catch((error) => {
@@ -34,12 +33,6 @@ export const get = async (id) => {
     return achievement;
 };
 
-// // Fetch a goal by id
-// export const getById = async (id) => {
-//     console.log(id);
-//     const goal = Goal.findById(id).exec();
-//     return goal;
-// }
 
 // Fetch all goals for a specific user by user ID
 export const getByUserId = async (userId) => {

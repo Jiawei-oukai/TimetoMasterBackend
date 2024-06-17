@@ -66,7 +66,6 @@ export const searchAllByGid = async (gid) => {
 
 export const searchDailyTimeByGoalId = async (gid) => {
     const records = await Record.find({ goalId: gid });
-
     const dailyTime = {};
 
     records.forEach(record => {
@@ -89,39 +88,40 @@ export const searchWeeklyTimeByGoalId = async (gid) => {
     const goalRecord = await Record.findOne({ goalId: gid });
     const goalName = goalRecord ? goalRecord.goalName : "Unknown Goal";
 
-    const weeklyTime = Array.from({ length: 8 }, () => ({
+    const weeks = 8; // last 8 weeks
+    const weeklyTime = Array.from({ length: weeks }, () => ({
         goalId: gid,
-        goalName, 
+        goalName,
         recordsDate: "",
         totalHours: 0
     }));
 
     const today = new Date();
-    today.setDate(today.getDate() - today.getDay() + 1);
-    today.setHours(0, 0, 0, 0); 
+    const offset = today.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+    const currentSunday = new Date(today);
+    currentSunday.setDate(today.getDate() - offset); // set to the most recent Sunday
+    currentSunday.setHours(0, 0, 0, 0); // set to midnight
 
-    for (let i = 0; i < 8; i++) {
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - 7 * i);
-        weeklyTime[i].recordsDate = monday.toISOString().split('T')[0];
+    for (let i = 0; i < weeks; i++) {
+        const sunday = new Date(currentSunday);
+        sunday.setDate(currentSunday.getDate() - 7 * i);
+        weeklyTime[i].recordsDate = sunday.toISOString().split('T')[0];
     }
 
     const records = await Record.find({ goalId: gid });
     records.forEach(record => {
         const recordDate = new Date(record.recordsDate);
-        const weeksAgo = Math.floor((today - recordDate) / (1000 * 60 * 60 * 24 * 7));
-        if (weeksAgo <= 7) { 
-            console.log('Matching record:', record); 
-            if (weeksAgo >= 0 && weeksAgo < weeklyTime.length) {
-                weeklyTime[weeksAgo].totalHours += record.Time;
-            } else {
-                console.warn('Invalid index:', weeksAgo);
-            }
+        const recordOffset = recordDate.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+        const recordSunday = new Date(recordDate);
+        recordSunday.setDate(recordDate.getDate() - recordOffset); // get the most recent Sunday for the record
+        const weeksAgo = Math.floor((currentSunday - recordSunday) / (1000 * 60 * 60 * 24 * 7));
+        if (weeksAgo >= 0 && weeksAgo < weeklyTime.length) {
+            weeklyTime[weeksAgo].totalHours += record.Time;
         }
     });
 
-    return weeklyTime.reverse(); 
-}
+    return weeklyTime.reverse();
+};
 
 
 export const searchMonthlyTimeByGoalId = async (gid) => {
@@ -258,10 +258,8 @@ export const searchMonthlyTimeByEmail = async (email) => {
 
 // Fetch records by due date
 export const searchByDate = async (date, email) => {
-    console.log("date in service:", date);
     const startDate = moment(date).startOf('day').toDate();
     const endDate = moment(date).endOf('day').toDate();
-    console.log(`Start Date: ${startDate}, End Date: ${endDate}`);
 
     return Record.find({
         userEmail: email,

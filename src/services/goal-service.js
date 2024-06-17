@@ -20,7 +20,6 @@ export const getByUserEmail = async (userEmail) => {
 
 // Fetch a goal by id
 export const getById = async (id) => {
-    console.log(id);
     const goal = Goal.findById(id).exec();
     return goal;
 }

@@ -42,10 +42,7 @@ export const getById = async (request, response) => {
 export const validateUser = async (request, response) => {
   try {
     const UserInfo = request.body;
-    console.log("user controller validate", UserInfo);
     const user = await userService.validate(UserInfo);
-    console.log("user", user);
-    console.log("response", response);
     setResponse(user, response);
   } catch (error) {
     setErrorResponse(401, error, response);
