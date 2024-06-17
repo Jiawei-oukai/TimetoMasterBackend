@@ -70,7 +70,7 @@ export const searchDailyTimeByGoalId = async (gid) => {
     const dailyTime = {};
 
     records.forEach(record => {
-        const date = record.recordsDate.toISOString().split('T')[0]; // 将日期转换为YYYY-MM-DD格式
+        const date = record.recordsDate.toISOString().split('T')[0]; // Convert dates to YYYY-MM-DD format
         if (!dailyTime[date]) {
             dailyTime[date] = {
                 goalId: gid,
@@ -125,17 +125,15 @@ export const searchWeeklyTimeByGoalId = async (gid) => {
 
 
 export const searchMonthlyTimeByGoalId = async (gid) => {
-    // 获取指定goalId的所有记录
     const records = await Record.find({ goalId: gid });
 
-    // 如果没有记录，返回空数组
     if (records.length === 0) {
         return [];
     }
 
     const goalName = records[0].goalName || "Unknown Goal";
 
-    // 创建一个包含最近6个月的数组
+    // Create an array containing the last 6 months
     const monthlyTime = Array.from({ length: 6 }, (_, i) => {
         const date = moment().startOf('month').subtract(i, 'months');
         return {
@@ -146,18 +144,18 @@ export const searchMonthlyTimeByGoalId = async (gid) => {
         };
     });
 
-    // 计算每个月的总时间
+    // Calculate total time per month
     records.forEach(record => {
         const recordDate = moment(record.recordsDate).startOf('month');
         const monthsDifference = moment().startOf('month').diff(recordDate, 'months');
 
-        // 检查记录是否在过去6个月内
+        // Check if the records are within the last 6 months
         if (monthsDifference >= 0 && monthsDifference < 6) {
             monthlyTime[monthsDifference].totalHours += record.Time;
         }
     });
 
-    // 按时间顺序返回结果（从最早到最近）
+    // Return results in chronological order (oldest to newest)
     return monthlyTime.reverse();
 };
 
@@ -174,7 +172,7 @@ export const searchDailyTimeByEmail = async (email) => {
     const dailyTime = {};
 
     records.forEach(record => {
-        const date = record.recordsDate.toISOString().split('T')[0]; // 将日期转换为YYYY-MM-DD格式
+        const date = record.recordsDate.toISOString().split('T')[0]; 
         if (!dailyTime[date]) {
             dailyTime[date] = {
                 recordsDate: date,
@@ -226,14 +224,14 @@ export const searchWeeklyTimeByEmail = async (email) => {
 };
 
 export const searchMonthlyTimeByEmail = async (email) => {
-    // 获取指定email的所有记录
+    
     const records = await Record.find({ userEmail: email });
 
     if (records.length === 0) {
         return [];
     }
 
-    // 创建一个包含最近6个月的数组
+    
     const monthlyTime = Array.from({ length: 6 }, (_, i) => {
         const date = moment().startOf('month').subtract(i, 'months');
         return {
@@ -243,18 +241,18 @@ export const searchMonthlyTimeByEmail = async (email) => {
     });
 
 
-    // 计算每个月的总时间
+    
     records.forEach(record => {
         const recordDate = moment(record.recordsDate).startOf('month');
         const monthsDifference = moment().startOf('month').diff(recordDate, 'months');
 
-        // 检查记录是否在过去6个月内
+        
         if (monthsDifference >= 0 && monthsDifference < 6) {
             monthlyTime[monthsDifference].totalHours += record.Time;
         }
     });
 
-    // 按时间顺序返回结果（从最早到最近）
+    
     return monthlyTime.reverse();
 };
 
