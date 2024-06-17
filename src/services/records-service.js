@@ -193,30 +193,33 @@ moment.updateLocale('en', {
 });
 
 export const searchWeeklyTimeByEmail = async (email) => {
-    const weeklyTime = Array.from({ length: 8 }, () => ({
+    const weeks = 10; // last 10 weeks
+    const weeklyTime = Array.from({ length: weeks }, () => ({
         recordsDate: "",
         totalHours: 0,
     }));
 
-    const today = moment();
-    const currentSunday = today.clone().day(0);
+    const today = new Date();
+    const offset = today.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+    const currentSunday = new Date(today);
+    currentSunday.setDate(today.getDate() - offset); // set to the most recent Sunday
+    currentSunday.setHours(0, 0, 0, 0); // set to midnight
 
-    for (let i = 0; i < 8; i++) {
-        const sunday = currentSunday.clone().add(i, 'days').subtract(i, 'weeks');
-        weeklyTime[i].recordsDate = sunday.format('YYYY-MM-DD');
+    for (let i = 0; i < weeks; i++) {
+        const sunday = new Date(currentSunday);
+        sunday.setDate(currentSunday.getDate() - 7 * i);
+        weeklyTime[i].recordsDate = sunday.toISOString().split('T')[0];
     }
 
     const records = await Record.find({ userEmail: email });
-    records.forEach((record) => {
-        const recordDate = moment(record.recordsDate);
-
-        for (let i = 0; i < 8; i++) {
-            const startOfWeek = moment(weeklyTime[i].recordsDate); 
-            const endOfWeek = moment(weeklyTime[i].recordsDate).add(6, 'days'); 
-
-            if (recordDate.isSameOrAfter(startOfWeek) && recordDate.isSameOrBefore(endOfWeek)) {
-                weeklyTime[i].totalHours += record.Time;
-            }
+    records.forEach(record => {
+        const recordDate = new Date(record.recordsDate);
+        const recordOffset = recordDate.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+        const recordSunday = new Date(recordDate);
+        recordSunday.setDate(recordDate.getDate() - recordOffset); // get the most recent Sunday for the record
+        const weeksAgo = Math.floor((currentSunday - recordSunday) / (1000 * 60 * 60 * 24 * 7));
+        if (weeksAgo >= 0 && weeksAgo < weeklyTime.length) {
+            weeklyTime[weeksAgo].totalHours += record.Time;
         }
     });
 
